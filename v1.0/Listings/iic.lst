@@ -1,0 +1,411 @@
+C251 COMPILER V5.60.0,  iic                                                                11/01/26  10:39:44  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE iic
+OBJECT MODULE PLACED IN .\Objects\iic.obj
+COMPILER INVOKED BY: D:\Software_D\Keil_v5\C251\BIN\C251.EXE Basic\iic.c XSMALL INTR2 BROWSE INCDIR(.\User;.\Modbus_lite
+                    -;.\Library;.\Basic;.\SSD1306) DEBUG PRINT(.\Listings\iic.lst) TABS(2) OBJECT(.\Objects\iic.obj) 
+
+stmt  level    source
+
+    1          #include "iic.h"
+    2          #include <INTRINS.H>
+    3          
+    4          
+    5          
+    6          
+    7          #if IIC_MODE == 0           //0：软件IIC
+               //------------------------------变量定义------------------------------
+               
+               u8 ack = 0;
+               
+               
+               
+               //------------------------------函数定义------------------------------
+               
+               
+               void IIC_Delay2us(void) //@22.1184MHz
+               {
+                   unsigned long edata i;
+               
+                   _nop_();
+                   _nop_();
+                   _nop_();
+                   i = 9UL;
+                   while (i) i--;
+               }
+               
+               //---------------------驱动函数---------------------
+               
+               
+               void IIC_Init(void)            //IIC初始化
+               {
+                   #if     IIC_PIN == 0        //4P
+                   SCL = 1;
+                   SDA = 1;
+                   #elif   IIC_PIN == 1        //7P
+                   SCL = 1;
+                   SDA = 1;
+                   RES = 1;
+                   DC = 0;
+                   CS = 0;
+                   #endif
+               }
+               
+               
+               void IIC_Start(void)            //IIC启动
+               {
+                   SCL = 1;
+                   SDA = 1;
+                   IIC_Delay2us();
+                   SDA = 0;
+                   IIC_Delay2us();
+                   SCL = 0;
+                   IIC_Delay2us();
+               }
+               
+               void IIC_Stop(void)             //IIC结束
+               {
+C251 COMPILER V5.60.0,  iic                                                                11/01/26  10:39:44  PAGE 2   
+
+                   SCL = 0;
+                   SDA = 0;
+                   IIC_Delay2us();
+                   SCL = 1;
+                   IIC_Delay2us();
+                   SDA = 1; 
+                   IIC_Delay2us();
+               }
+               
+               
+               void IIC_SendACK(void)          //发送ACK
+               {
+                   SDA = 0;
+                   IIC_Delay2us();
+                   SCL = 1;
+                   IIC_Delay2us();
+                   SCL = 0;
+                   IIC_Delay2us();
+               }
+               
+               void IIC_SendNoACK(void)        //发送NOACK
+               {
+                   SDA = 1;
+                   IIC_Delay2us();
+                   SCL = 1;
+                   IIC_Delay2us();
+                   SCL = 0;
+                   IIC_Delay2us();
+               }
+               
+               
+               void IIC_WaitACK(void)          //等待从机ACK
+               {
+                   SDA = 1;
+                   IIC_Delay2us();
+                   SCL = 1;
+                   IIC_Delay2us();
+                   ack = SDA;
+                   IIC_Delay2us();
+                   SCL = 0;
+                   IIC_Delay2us();
+               }
+               
+               void IIC_SendByte(u8 dat)       //发送一个字节
+               {
+                   u8 i = 8;
+                   do
+                   {
+                       if (dat & 0x80)
+                           SDA = 1;
+                       else
+                           SDA = 0;
+                       IIC_Delay2us();
+                       dat <<= 1;
+                       SCL = 1;
+                       IIC_Delay2us();
+                       SCL = 0;
+                       IIC_Delay2us();
+                   } while (--i);
+               }
+               
+               u8 IIC_ReadByte(void)           //读取一个字节
+               {
+                   u8 i = 8, dat = 0;
+                   SDA = 1;
+                   IIC_Delay2us();
+C251 COMPILER V5.60.0,  iic                                                                11/01/26  10:39:44  PAGE 3   
+
+                   do
+                   {
+                       SCL = 1;
+                       IIC_Delay2us();
+                       dat <<= 1;
+                       if (SDA)
+                           dat |= 1;
+                       SCL = 0;
+                       IIC_Delay2us();
+                   } while (--i);
+               
+                   return dat;
+               }
+               
+               //---------------------功能函数---------------------
+               
+               /**
+                * @name IIC_Write_Byte
+                * @brief IIC写入连续的几个字节
+                * @param slave：选择哪一个从机的地址
+                * @param addr：数据的地址
+                * @param p：数据内容
+                * @param number：写入几个数据
+                * @return 无
+                * @version 版本：v1.0
+                * @date 日期：2023
+                * @author 作者：汐
+                * @note 注释：
+                */
+               void IIC_Write_Byte(u8 slave,u8 addr,u8 *p,u8 number)       //IIC写入连续的几个字节
+               {
+                   IIC_Start();
+                   IIC_SendByte(slave);
+                   IIC_WaitACK();
+                   if (!ack)
+                   {
+                       IIC_SendByte(addr);
+                       IIC_WaitACK();
+                       if (!ack)
+                       {
+                           do
+                           {
+                               IIC_SendByte(*p);
+                               p++;
+                               IIC_WaitACK();
+                               if (ack)
+                                   break;
+                           } while (--number);
+                       }
+                   }
+                   IIC_Stop();
+               }
+               
+               /**
+                * @name IIC_Read_Byte
+                * @brief IIC读取连续的几个字节
+                * @param slave：选择哪一个从机的地址
+                * @param addr：要读的数据的地址
+                * @param p：数据
+                * @param number：写入几个数据
+                * @return 
+                * @version 版本：v1.0
+                * @date 日期：2023
+                * @author 作者：汐
+                * @note 注释：发送开始命令->发送器件地址（写）->发送数据地址->发送开始命令->发送器件地址（读）->读数据
+                */
+C251 COMPILER V5.60.0,  iic                                                                11/01/26  10:39:44  PAGE 4   
+
+               void IIC_Read_Byte(u8 slave,u8 addr,u8 *p,u8 number)       //IIC读取连续的几个字节
+               {
+                   IIC_Start();
+                   IIC_SendByte(slave);
+                   IIC_WaitACK();
+                   if (!ack)
+                   {
+                       IIC_SendByte(addr);
+                       IIC_WaitACK();
+                       if (!ack)
+                       {
+                           IIC_Start();
+                           IIC_SendByte((u8)(slave + 0x01));
+                           IIC_WaitACK();
+                           if (!ack)
+                           {
+                               do
+                               {
+                                   *p = IIC_ReadByte();
+                                   p++;
+                                   if(number != 1)
+                                       IIC_SendACK();
+                               } while (--number);
+                               IIC_SendNoACK();
+                           }
+                           
+                       }
+                   }
+                   IIC_Stop();
+               }
+               
+               
+               
+               #elif IIC_MODE == 1             //1：硬件IIC
+  225          
+  226          //------------------------------变量定义------------------------------
+  227          
+  228          //------------------------------函数定义------------------------------
+  229          
+  230          void IIC_Delay2us(void) //@22.1184MHz
+  231          {
+  232   1          while( !(I2CMSST & 0X40) );
+  233   1          I2CMSST &= ~(0x40);
+  234   1      }
+  235          
+  236          //---------------------驱动函数---------------------
+  237          
+  238          void IIC_Init(void)            //硬件IIC初始化
+  239          {
+  240   1          I2C_S1 = 0;                 //设置IIC的引脚,00:P15,P14; 01:P25,P24; 11:P32,P33
+  241   1          I2C_S0 = 1;                 //SCL=P25 SDA=P24
+  242   1          I2CCFG = 0XE0;              //设置速度和使能IIC
+  243   1          I2CMSST = 0;                //清空主机状态
+  244   1      }
+  245          
+  246          
+  247          void IIC_Start(void)            //IIC启动
+  248          {
+  249   1          I2CMSCR = 0X01;             //开始命令
+  250   1          IIC_Delay2us();             //等待命令
+  251   1      }
+  252          
+  253          void IIC_Stop(void)             //IIC结束
+  254          {
+  255   1          I2CMSCR = 0X06;             //结束命令
+  256   1          IIC_Delay2us();             //等待命令
+C251 COMPILER V5.60.0,  iic                                                                11/01/26  10:39:44  PAGE 5   
+
+  257   1      }
+  258          
+  259          
+  260          void IIC_SendACK(void)          //发送ACK
+  261          {
+  262   1          I2CMSST = 0X00;             //准备发送ACK
+  263   1          I2CMSCR = 0X05;             //发送ACK
+  264   1          IIC_Delay2us();
+  265   1      }
+  266          
+  267          void IIC_SendNoACK(void)        //发送NOACK
+  268          {
+  269   1          I2CMSST = 0X01;             //准备发送NOACK
+  270   1          I2CMSCR = 0X05;             //发送NOACK
+  271   1          IIC_Delay2us();
+  272   1      }
+  273          
+  274          
+  275          void IIC_WaitACK(void)          //等待从机ACK
+  276          {
+  277   1          I2CMSCR = 0X03;             //接收ACK命令
+  278   1          IIC_Delay2us();
+  279   1      }
+  280          
+  281          void IIC_SendByte(u8 dat)       //发送一个字节
+  282          {
+  283   1          I2CTXD = dat;               //发送的数据写入寄存器
+  284   1          I2CMSCR = 0X02;             //发送数据指令
+  285   1          IIC_Delay2us();
+  286   1      }
+  287          
+  288          u8 IIC_ReadByte(void)           //读取一个字节
+  289          {
+  290   1          I2CMSCR = 0X04;             //接收数据指令
+  291   1          IIC_Delay2us();
+  292   1      
+  293   1          return I2CRXD;
+  294   1      }
+  295          
+  296          //---------------------功能函数---------------------
+  297          
+  298          /**
+  299           * @name IIC_Write_Byte
+  300           * @brief IIC写入连续的几个字节
+  301           * @param slave：选择哪一个从机的地址
+  302           * @param addr：数据的地址
+  303           * @param p：数据内容
+  304           * @param number：写入几个数据
+  305           * @return 无
+  306           * @version 版本：v1.0
+  307           * @date 日期：2023
+  308           * @author 作者：汐
+  309           * @note 注释：
+  310           */
+  311          void IIC_Write_Byte(u8 slave,u8 addr,u8 *p,u8 number)       //IIC写入连续的几个字节
+  312          {
+  313   1          IIC_Start();
+  314   1          IIC_SendByte(slave);
+  315   1          IIC_WaitACK();
+  316   1          
+  317   1          IIC_SendByte(addr);
+  318   1          IIC_WaitACK();
+  319   1      
+  320   1          do
+  321   1          {
+  322   2              IIC_SendByte(*p);
+C251 COMPILER V5.60.0,  iic                                                                11/01/26  10:39:44  PAGE 6   
+
+  323   2              p++;
+  324   2              IIC_WaitACK();
+  325   2          } while (--number);
+  326   1          
+  327   1          IIC_Stop();
+  328   1      }
+  329          
+  330          /**
+  331           * @name IIC_Read_Byte
+  332           * @brief IIC读取连续的几个字节
+  333           * @param slave：选择哪一个从机的地址
+  334           * @param addr：要读的数据的地址
+  335           * @param p：数据
+  336           * @param number：写入几个数据
+  337           * @return 
+  338           * @version 版本：v1.0
+  339           * @date 日期：2023
+  340           * @author 作者：汐
+  341           * @note 注释：发送开始命令->发送器件地址（写）->发送数据地址->发送开始命令->发送器件地址（读）->读数据
+  342           */
+  343          void IIC_Read_Byte(u8 slave,u8 addr,u8 *p,u8 number)       //IIC读取连续的几个字节
+  344          {
+  345   1          IIC_Start();
+  346   1          IIC_SendByte(slave);
+  347   1          IIC_WaitACK();
+  348   1      
+  349   1          IIC_SendByte(addr);
+  350   1          IIC_WaitACK();
+  351   1      
+  352   1          IIC_Start();
+  353   1          IIC_SendByte((u8)(slave + 0x01));
+  354   1          IIC_WaitACK();
+  355   1      
+  356   1          do
+  357   1          {
+  358   2              *p = IIC_ReadByte();
+  359   2              p++;
+  360   2              if(number != 1)
+  361   2                  IIC_SendACK();
+  362   2          } while (--number);
+  363   1          IIC_SendNoACK();
+  364   1          IIC_Stop();
+  365   1      }
+  366          
+  367          #endif
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       359     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------          6
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

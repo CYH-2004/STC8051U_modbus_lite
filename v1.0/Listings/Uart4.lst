@@ -1,0 +1,203 @@
+C251 COMPILER V5.60.0,  Uart4                                                              11/01/26  10:39:44  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE Uart4
+OBJECT MODULE PLACED IN .\Objects\Uart4.obj
+COMPILER INVOKED BY: D:\Software_D\Keil_v5\C251\BIN\C251.EXE Basic\Uart4.c XSMALL INTR2 BROWSE INCDIR(.\User;.\Modbus_li
+                    -te;.\Library;.\Basic;.\SSD1306) DEBUG PRINT(.\Listings\Uart4.lst) TABS(2) OBJECT(.\Objects\Uart4.obj) 
+
+stmt  level    source
+
+    1          #include "Uart4.h"
+    2          
+    3          /*************  本地变量声明    **************/
+    4          
+    5          u8  TX4_Cnt;    //发送计数
+    6          u8  RX4_Cnt;    //接收计数
+    7          u8  RX4_TimeOut;//接收超时计时器
+    8          
+    9          bit B_RX4_OK; //接收数据标志，需手动清0
+   10          bit B_TX4_Busy; //发送忙标志
+   11          
+   12          u8  xdata RX4_Buffer[RX4_Length]; //接收缓冲
+   13          
+   14          /*************  本地函数声明    **************/
+   15          
+   16          void UART4_config(u8 brt);   // 选择波特率, 2: 使用Timer2做波特率, 其它值: 使用Timer3做波特率.
+   17          void PrintString4(u8 *puts);
+   18          void UART4_send(u8 *p, u8 len);
+   19          
+   20          //========================================================================
+   21          // 函数: void PrintString4(u8 *puts)
+   22          // 描述: 串口4发送字符串函数。
+   23          // 参数: puts:  字符串指针.
+   24          // 返回: none.
+   25          // 版本: VER1.0
+   26          // 日期: 2014-11-28
+   27          // 备注: 
+   28          //========================================================================
+   29          void PrintString4(u8 *puts)
+   30          {
+   31   1          for (; *puts != 0;  puts++)     //遇到停止符0结束
+   32   1          {
+   33   2              S4BUF = *puts;
+   34   2              B_TX4_Busy = 1;
+   35   2              while(B_TX4_Busy);
+   36   2          }
+   37   1      }
+   38          
+   39          //========================================================================
+   40          // 函数: void UART4_send(u8 *p, u8 len)
+   41          // 描述: 串口3数据发送函数。
+   42          // 参数: p:  数据指针.  len:  数据长度.
+   43          // 返回: none.
+   44          // 版本: VER1.0
+   45          // 日期: 2026-1-4
+   46          // 备注: 
+   47          //========================================================================
+   48          void UART4_send(u8 *p, u8 len)
+   49          {
+   50   1          u8 i;
+   51   1          for (i = 0; i < len; i++)
+   52   1          {
+   53   2              while (B_TX4_Busy);
+   54   2              B_TX4_Busy = 1;
+   55   2              S4BUF = *p;
+   56   2              p++;
+   57   2          }
+   58   1      }
+C251 COMPILER V5.60.0,  Uart4                                                              11/01/26  10:39:44  PAGE 2   
+
+   59          
+   60          void UART4_RX_buffer_reset(void)
+   61          {
+   62   1          B_RX4_OK = 0;
+   63   1          RX4_Cnt = 0;
+   64   1      }
+   65          
+   66          uint8_t get_RX4_buffer_length(void)
+   67          {
+   68   1          return RX4_Cnt;
+   69   1      }
+   70          
+   71          //========================================================================
+   72          // 函数: uint8_t xdata *get_RX4_buffer_address(void)
+   73          // 描述: 获取UART3接收缓冲区地址.
+   74          // 参数: none.
+   75          // 返回: none.
+   76          // 版本: VER1.0
+   77          // 日期: 2026-1-4
+   78          // 备注: 
+   79          //========================================================================
+   80          uint8_t xdata *get_RX4_buffer_address(void)
+   81          {
+   82   1          return RX4_Buffer;
+   83   1      }
+   84          
+   85          //========================================================================
+   86          // 函数: SetTimer2Baudraye_for_uart4(u32 dat)
+   87          // 描述: 设置Timer2做波特率发生器。
+   88          // 参数: dat: Timer2的重装值.
+   89          // 返回: none.
+   90          // 版本: VER1.0
+   91          // 日期: 2014-11-28
+   92          // 备注: 
+   93          //========================================================================
+   94          void SetTimer2Baudraye_for_uart4(u32 dat)  // 使用Timer2做波特率.
+   95          {
+   96   1          T2R = 0;    //Timer stop
+   97   1          T2_CT = 0;  //Timer2 set As Timer
+   98   1          T2x12 = 1;  //Timer2 set as 1T mode
+   99   1          T2H = (u8)(dat / 256);
+  100   1          T2L = (u8)(dat % 256);
+  101   1          ET2 = 0;    //禁止中断
+  102   1          T2R = 1;    //Timer run enable
+  103   1      }
+  104          
+  105          //========================================================================
+  106          // 函数: void UART4_config(u8 brt)
+  107          // 描述: UART4初始化函数。
+  108          // 参数: brt: 选择波特率, 2: 使用Timer2做波特率, 其它值: 使用Timer4做波特率.
+  109          // 返回: none.
+  110          // 版本: VER1.0
+  111          // 日期: 2014-11-28
+  112          // 备注: 
+  113          //========================================================================
+  114          void UART4_config(u8 brt)    // 选择波特率, 2: 使用Timer2做波特率, 其它值: 使用Timer4做波特率.
+  115          {
+  116   1          if(brt == 2)
+  117   1          {
+  118   2              SetTimer2Baudraye_for_uart4(Baudrate4);
+  119   2              S4CON = 0x10;       //8位数据, 使用Timer2做波特率发生器, 允许接收
+  120   2          }
+  121   1          else
+  122   1          {
+  123   2              T4R = 0;  //Timer stop
+  124   2              S4CON = 0x50;       //8位数据, 使用Timer4做波特率发生器, 允许接收
+C251 COMPILER V5.60.0,  Uart4                                                              11/01/26  10:39:44  PAGE 3   
+
+  125   2              T4H = (u8)(Baudrate4 / 256);
+  126   2              T4L = (u8)(Baudrate4 % 256);
+  127   2              T4_CT = 0;  //Timer3 set As Timer
+  128   2              T4x12 = 1;  //Timer3 set as 1T mode
+  129   2              T4R = 1;  //Timer run enable
+  130   2          }
+  131   1          ES4  = 1;       //允许UART4中断
+  132   1          S4_S = 0;       //UART4 switch bit2 to: 0: P0.2 P0.3, 1: P5.2 P5.3
+  133   1      
+  134   1          B_TX4_Busy = 0;
+  135   1          TX4_Cnt = 0;
+  136   1          RX4_Cnt = 0;
+  137   1      }
+  138          
+  139          
+  140          //========================================================================
+  141          // 函数: void UART4_int (void) interrupt UART4_VECTOR
+  142          // 描述: UART4中断函数。
+  143          // 参数: nine.
+  144          // 返回: none.
+  145          // 版本: VER1.0
+  146          // 日期: 2014-11-28
+  147          // 备注: 
+  148          //========================================================================
+  149          void UART4_int (void) interrupt 18
+  150          {
+  151   1          if(S4RI)
+  152   1          {
+  153   2              S4RI = 0;    //Clear Rx flag
+  154   2              RX4_Buffer[RX4_Cnt] = S4BUF;
+  155   2              if(++RX4_Cnt >= RX4_Length)   RX4_Cnt = 0;
+  156   2              RX4_TimeOut = 2;    //timeout in 1ms
+  157   2          }
+  158   1      
+  159   1          if(S4TI)
+  160   1          {
+  161   2              S4TI = 0;    //Clear Tx flag
+  162   2              B_TX4_Busy = 0;
+  163   2          }
+  164   1      }
+  165          
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       222     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       128     ------
+  xdata-const size     =    ------     ------
+  edata size           =         3     ------
+  bit size             =         2     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,14 @@
+".\Objects\Key.obj",
+".\Objects\Timer.obj",
+".\Objects\Uart1.obj",
+".\Objects\Uart2.obj",
+".\Objects\Uart3.obj",
+".\Objects\iic.obj",
+".\Objects\Uart4.obj",
+".\Objects\modbus.obj",
+".\Objects\main.obj",
+".\Objects\oled12824_iic.obj" 
+TO ".\Objects\STC8051U_modbus_lite" 
+PRINT(".\Listings\STC8051U_modbus_lite.map") CASE DISABLEWARNING (57) 
+CLASSES (EDATA (0x0-0x7FF), 
+HDATA (0x0-0x7FF)) 

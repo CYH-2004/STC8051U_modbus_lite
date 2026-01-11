@@ -1,0 +1,288 @@
+C251 COMPILER V5.60.0,  main                                                               11/01/26  10:39:44  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE main
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Software_D\Keil_v5\C251\BIN\C251.EXE User\main.c XSMALL INTR2 BROWSE INCDIR(.\User;.\Modbus_lite
+                    -;.\Library;.\Basic;.\SSD1306) DEBUG PRINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj) 
+
+stmt  level    source
+
+    1          #include "SysConfig.h"
+    2          
+    3          #include "Timer.h"
+    4          #include "Uart1.h"
+    5          #include "Uart2.h"
+    6          #include "Uart3.h"
+    7          #include "Uart4.h"
+    8          #include "Key.h"
+    9          
+   10          #include "iic.h"
+   11          #include "oled12824_iic.h"
+   12          
+   13          #include "modbus.h"
+   14          
+   15          
+   16          void MCU_Init(void)
+   17          {
+   18   1          P_SW2|=0x80;     //使能访问XFR，没有冲突不用关闭
+   19   1        CKCON=0x00;     //设置外部数据总线速度为最快
+   20   1        WTST=0x00;      //设置程序代码等待参数
+   21   1                          //赋值为0可将CPU执行程序的速度设置为最快
+   22   1      
+   23   1        //IO口初始设置
+   24   1          P0M0 = 0x00;    P0M1 = 0x00;
+   25   1          P1M0 = 0x00;    P1M1 = 0x00;
+   26   1          P2M0 = 0xff;    P2M1 = 0x00; 
+   27   1          P3M0 = 0x00;    P3M1 = 0x00;
+   28   1          P4M0 = 0x00;    P4M1 = 0x00;
+   29   1          P5M0 = 0x00;    P5M1 = 0x00;
+   30   1      
+   31   1          EA=1;
+   32   1      
+   33   1          timer4_init();      //Systick初始化
+   34   1      
+   35   1          UART1_config(0);    //UART1初始化
+   36   1          // UART2_config(2);    //UART2初始化
+   37   1          
+   38   1          //其他控制初始化
+   39   1          LED_ctrl_1 = 0;
+   40   1          LED_ctrl_2 = 0;
+   41   1          
+   42   1          Delay1000ms();
+   43   1          // PrintString1("STC8051U UART initialization succeed !\r\n");
+   44   1          LED_ctrl_2 = 1;
+   45   1      }
+   46          
+   47          void modbus_connect_lost(void)
+   48          {
+   49   1          OLED_GRAM_Clear(0);
+   50   1          if(modbus_mode())   //主机模式
+   51   1          {
+   52   2              OLED_ShowStringG(0, 0, "Master mode", 16, 1);
+   53   2          }
+   54   1          else  //从机模式
+   55   1          {
+   56   2              OLED_ShowStringG(0, 0, "Slave mode", 16, 1);
+   57   2          }
+   58   1          OLED_ShowStringG(0, 3, "Reconnecting...", 16, 0);
+C251 COMPILER V5.60.0,  main                                                               11/01/26  10:39:44  PAGE 2   
+
+   59   1          OLED_Refresh_Gram();
+   60   1      }
+   61          
+   62          void main()
+   63          {
+   64   1          uint8_t light_status;
+   65   1          uint8_t light_status_temp;
+   66   1          uint16_t counter;
+   67   1          // uint16_t counter_temp;
+   68   1      
+   69   1          uint16_t slave_address;
+   70   1          uint16_t slave_light_coil_addr;
+   71   1          uint16_t slave_counter_reg_addr;
+   72   1      
+   73   1          volatile uint8_t slave_status;
+   74   1      
+   75   1          MCU_Init();
+   76   1      
+   77   1      
+   78   1          OLED_Init();
+   79   1          OLED_GRAM_Clear(0);
+   80   1          OLED_Refresh_Gram();
+   81   1          counter = 0;
+   82   1          light_status = 0;
+   83   1          
+   84   1      
+   85   1          //设置从站地址
+   86   1          slave_address = 0x10;
+   87   1      
+   88   1          //设置从站数据存储地址，默认为可用的首地址
+   89   1          slave_light_coil_addr = COILS_START_ADDRESS;
+   90   1          slave_counter_reg_addr = HOLDING_REG_START_ADDRESS;
+   91   1      
+   92   1          if(key_scan2(200))  //从机模式
+   93   1          {
+   94   2              LED_ctrl_2 = 0;
+   95   2              PrintString1("UART1: Enter modbus slave mode!\r\n");
+   96   2              // PrintString2("UART2: Enter modbus slave mode!\r\n");
+   97   2              modbus_RTU_init(115200, 0, slave_address);
+*** WARNING C188 IN LINE 97 OF User\main.c: 'constant': value truncated
+*** WARNING C188 IN LINE 97 OF User\main.c: 'parameter 3': value truncated
+   98   2      
+   99   2              OLED_GRAM_Clear(0);
+  100   2              OLED_ShowStringG(0, 0, "Slave", 16, 0);
+  101   2              OLED_ShowStringG(0, 3, "Initializing...", 16, 0);
+  102   2              OLED_Refresh_Gram();
+  103   2              
+  104   2              light_status_temp = light_status;
+  105   2              modbus_write_bit_status(slave_light_coil_addr, &light_status);
+  106   2              modbus_write_reg_value(slave_counter_reg_addr, &counter);
+  107   2      
+  108   2              OLED_GRAM_Clear(0);
+  109   2              OLED_ShowStringG(0, 0, "Slave", 16, 1);
+  110   2              if(light_status)
+  111   2              {
+  112   3                  // LED_ctrl_1 = 1;
+  113   3                  OLED_ShowStringG(0, 4, "Light On", 16, 0);
+  114   3                  OLED_DrawRoundRectangleG(85, 20, 124, 59, 8, 1, 1);
+  115   3                  OLED_Refresh_Gram();
+  116   3              }
+  117   2              else
+  118   2              {
+  119   3                  // LED_ctrl_1 = 0;
+  120   3                  OLED_ShowStringG(0, 4, "Light Off", 16, 0);
+  121   3                  OLED_DrawRoundRectangleG(85, 20, 124, 59, 8, 0, 1);
+  122   3                  OLED_Refresh_Gram();
+C251 COMPILER V5.60.0,  main                                                               11/01/26  10:39:44  PAGE 3   
+
+  123   3              }
+  124   2              OLED_ShowStringG(0, 6, "Cnt:", 16, 0);
+  125   2              OLED_ShowNumG(45, 6, counter, 1, 16, 0);
+  126   2              OLED_Refresh_Gram();
+  127   2      
+  128   2              while(1)
+  129   2              {
+  130   3                  modbus_RTU_slave();
+  131   3      
+  132   3                  modbus_get_bit_status(slave_light_coil_addr, &light_status_temp);   //读取灯状态寄存器
+  133   3                  if(light_status_temp != light_status)
+  134   3                  {
+  135   4                      OLED_GRAM_Clear(0);
+  136   4                      light_status = light_status_temp;
+  137   4                      if(light_status)
+  138   4                      {
+  139   5                          modbus_get_reg_value(slave_counter_reg_addr, &counter);     //读取计数寄存器
+*** WARNING C98 IN LINE 139 OF User\main.c: parameter 2: pointer to different objects
+*** WARNING C91 IN LINE 139 OF User\main.c: '&': pointer to different objects
+  140   5                          counter++;
+  141   5                          modbus_write_reg_value(slave_counter_reg_addr, &counter);   //写入计数寄存器
+  142   5                          
+  143   5                          // LED_ctrl_1 = 1;
+  144   5                          OLED_ShowStringG(0, 4, "Light On", 16, 0);
+  145   5                          OLED_DrawRoundRectangleG(85, 20, 124, 59, 8, 1, 1);
+  146   5                      }
+  147   4                      else
+  148   4                      {
+  149   5                          // LED_ctrl_1 = 0;
+  150   5                          OLED_GRAM_Clear(0);
+  151   5                          OLED_ShowStringG(0, 4, "Light Off", 16, 0);
+  152   5                          OLED_DrawRoundRectangleG(85, 20, 124, 59, 8, 0, 1);
+  153   5                      }
+  154   4                  }
+  155   3                  modbus_get_reg_value(slave_counter_reg_addr, &counter);
+*** WARNING C98 IN LINE 155 OF User\main.c: parameter 2: pointer to different objects
+*** WARNING C91 IN LINE 155 OF User\main.c: '&': pointer to different objects
+  156   3                  OLED_ShowStringG(0, 6, "Cnt:", 16, 0);
+  157   3                  OLED_ShowNumG(45, 6, counter, 1, 16, 0);
+  158   3      
+  159   3                  OLED_ShowStringG(0, 0, "Slave", 16, 1);
+  160   3                  OLED_ShowStringG(0, 2, "Addr:", 16, 0);
+  161   3                  OLED_ShowNumG(45, 2, slave_address, 3, 16, 0);
+  162   3                  OLED_Refresh_Gram();
+  163   3                  // if(key_scan2(10))
+  164   3                  // {
+  165   3                  //     counter = 0;
+  166   3                  // }
+  167   3              }
+  168   2          }
+  169   1          else    //主机模式
+  170   1          {
+  171   2              PrintString1("UART1: Enter modbus master mode!\r\n");
+  172   2              // PrintString2("UART2: Enter modbus master mode!\r\n");
+  173   2              modbus_RTU_init(115200, 1, slave_address);
+*** WARNING C188 IN LINE 173 OF User\main.c: 'constant': value truncated
+*** WARNING C188 IN LINE 173 OF User\main.c: 'parameter 3': value truncated
+  174   2      
+  175   2              OLED_GRAM_Clear(0);
+  176   2              OLED_ShowStringG(0, 0, "Master", 16, 0);
+  177   2              OLED_ShowStringG(0, 3, "Connecting...", 16, 0);
+  178   2              OLED_Refresh_Gram();
+  179   2      
+  180   2              //熄灯并清除从机计数器
+  181   2              // while(modbus_RTU_write_single_coil(slave_address, slave_light_coil_addr, 0, 300)) n_ms(10);
+  182   2              // while(modbus_RTU_write_single_reg(slave_address, slave_counter_reg_addr, 0, 300)) n_ms(10);
+C251 COMPILER V5.60.0,  main                                                               11/01/26  10:39:44  PAGE 4   
+
+  183   2              slave_status = 1;
+  184   2              while(slave_status) slave_status = modbus_RTU_write_single_coil(slave_address, slave_light_coil_a
+             -ddr, 0, 300);
+*** WARNING C188 IN LINE 184 OF User\main.c: 'parameter 1': value truncated
+  185   2              slave_status = 1;
+  186   2              while(slave_status) slave_status = modbus_RTU_write_single_reg(slave_address, slave_counter_reg_a
+             -ddr, 0, 300);
+*** WARNING C188 IN LINE 186 OF User\main.c: 'parameter 1': value truncated
+  187   2      
+  188   2              while(1)
+  189   2              {
+  190   3                  
+  191   3                  while(modbus_RTU_read_coils(slave_address, slave_light_coil_addr, 1, &light_status, 300)) mod
+             -bus_connect_lost(); // 读取从机灯状态
+*** WARNING C188 IN LINE 191 OF User\main.c: 'parameter 1': value truncated
+  192   3                  while(modbus_RTU_read_holding_regs(slave_address, slave_counter_reg_addr, 1, &counter, 300)) 
+             -modbus_connect_lost(); // 读取从机计数值
+*** WARNING C188 IN LINE 192 OF User\main.c: 'parameter 1': value truncated
+  193   3      
+  194   3                  //刷新显示
+  195   3                  OLED_GRAM_Clear(0);
+  196   3                  OLED_ShowStringG(0, 0, "Master", 16, 1);
+  197   3                  OLED_ShowStringG(0, 2, "Dest:", 16, 0);
+  198   3                  OLED_ShowNumG(45, 2, slave_address, 3, 16, 0);
+  199   3                  if(light_status) 
+  200   3                  {
+  201   4                      OLED_ShowStringG(0, 4, "Light On", 16, 0);
+  202   4                      OLED_DrawRoundRectangleG(85, 20, 124, 59, 8, 1, 1);
+  203   4                  }
+  204   3                  else 
+  205   3                  {
+  206   4                      OLED_ShowStringG(0, 4, "Light Off", 16, 0);
+  207   4                      OLED_DrawRoundRectangleG(85, 20, 124, 59, 8, 0, 1);
+  208   4                  }
+  209   3                  OLED_ShowStringG(0, 6, "Cnt:", 16, 0);
+  210   3                  OLED_ShowNumG(42, 6, counter, 3, 16, 0);            
+  211   3                  OLED_Refresh_Gram();
+  212   3      
+  213   3                  //检测按键
+  214   3                  if(key_scan2(90)) 
+  215   3                  {
+  216   4                      while(modbus_RTU_read_coils(slave_address, slave_light_coil_addr, 1, &light_status, 300))
+             - modbus_connect_lost();
+*** WARNING C188 IN LINE 216 OF User\main.c: 'parameter 1': value truncated
+  217   4                      light_status = !light_status;
+  218   4                      while(modbus_RTU_write_single_coil(slave_address, slave_light_coil_addr, light_status, 30
+             -0)) modbus_connect_lost();
+*** WARNING C188 IN LINE 218 OF User\main.c: 'parameter 1': value truncated
+  219   4                      while(modbus_RTU_read_holding_regs(slave_address, slave_counter_reg_addr, 1, &counter, 30
+             -0)) modbus_connect_lost();
+*** WARNING C188 IN LINE 219 OF User\main.c: 'parameter 1': value truncated
+  220   4                  }
+  221   3              }
+  222   2          }
+  223   1      }
+  224          
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      1217     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+C251 COMPILER V5.60.0,  main                                                               11/01/26  10:39:44  PAGE 5   
+
+  edata size           =    ------          5
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       187     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  15 WARNING(S),  0 ERROR(S)
