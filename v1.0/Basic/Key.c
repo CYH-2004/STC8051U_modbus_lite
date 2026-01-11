@@ -6,19 +6,14 @@
 void key_scan(void)						//按键处理
 {
 	uchar i;
-	//P2=0Xff;
 	KEY_OK=1;
 key_in:
 	n_ms(10);
-	//i=P2;
-	//i=i&0x01;					//P3.5为按键输入;ok=0x01,down=0x02,up=0x04
 	i=KEY_OK;
 	if(i>0)	
 	goto key_in;
 key_hold:
 	n_ms(10);
-    //i=P2;
-	//i=i&0x01;
 	i=KEY_OK;
 	if(i<1)
 	goto key_hold;
@@ -30,13 +25,10 @@ void key_scan1(uint16_t dtime)						//dtime=5000>>>>time<=8s
 {
 	uchar i;
 	uint j;
-	//P2=0Xff;
 	KEY_OK=1;
 	j=0;
 key_in:
 	n_ms(10);
-	//i=P2;						//P2.0=ok,P2.1=down,P2.2=up
-	//i=i&0x01;					//P3.5为按键输入;ok=0x01,down=0x02,up=0x04
 	i=KEY_OK;
 	if(i>0)
 	{
@@ -48,8 +40,6 @@ key_in:
 	}
 key_hold:
 	n_ms(10);
-  	//i=P2;
-	//i=i&0x01;
 	i=KEY_OK;
 	if(i<1)
 	{
@@ -71,37 +61,28 @@ uint8_t key_scan2(uint16_t dtime)
 	uint j;
 	j=0;
 	pin_address=0;//扫描结果初始化
-	//P2=0Xff;//端口初始化
 	KEY_OK=1;
 	KEY_UP=1;
 	KEY_DOWN=1;
 
 scan_start://端口扫描，在任意按键被按下前重复检测，直到延时结束
 	n_ms(10);
-
-	//P1=0x0c;//尝试用P1控制LED
 	if(j>dtime)
 	{
 		goto scan_finish;
 	}	
-	//i=P2;
-	//i=i&0x01;
 	i=KEY_OK;
 	if (i<1) 
 		{
 			pin_address=1;
 			goto scan_check;
 		}
-	//i=P2;
-	//i=i&0x02;	
 	i=KEY_DOWN;
 	if (i<1) 
 		{
 			pin_address=2;
 			goto scan_check;
 		}
-	//i=P2;
-	//i=i&0x04;	
 	i=KEY_UP;
 	if (i<1) 
 		{
@@ -119,8 +100,6 @@ scan_check://检测到按键按下后确认按键松开，直到延时结束
 	{
 		case 1:
 			n_ms(10);
-  			//i=P2;
-			//i=i&0x01;
 			i=KEY_OK;
 			if(i<1&&j<dtime)
 			{
@@ -131,8 +110,6 @@ scan_check://检测到按键按下后确认按键松开，直到延时结束
 			break;
 		case 2:
 			n_ms(10);
-  			//i=P2;
-			//i=i&0x02;	
 			i=KEY_DOWN;
 			if(i<1&&j<dtime)
 			{
@@ -143,8 +120,6 @@ scan_check://检测到按键按下后确认按键松开，直到延时结束
 			break;
 		case 3:
 			n_ms(10);
-  			//i=P2;
-			//i=i&0x04;	
 			i=KEY_UP;
 			if(i<1&&j<dtime)
 			{
@@ -166,13 +141,10 @@ uint16_t key_scan3(uint16_t dtime)						//dtime=5000>>>>time<=8s
 {
 	uchar i;
 	uint j;
-	//P2=0Xff;
 	KEY_OK=1;
 	j=0;
 key_in:
 	n_ms(10);
-	//i=P2;						//P2.0=ok,P2.1=down,P2.2=up
-	//i=i&0x01;					//P3.5为按键输入;ok=0x01,down=0x02,up=0x04
 	i=KEY_OK;
 	if(i>0)
 	{
@@ -184,8 +156,6 @@ key_in:
 	}
 key_hold:
 	n_ms(10);
-  	//i=P2;
-	//i=i&0x01;
 	i=KEY_OK;
 	if(i<1)
 	{
@@ -208,33 +178,24 @@ uint16_t key_scan4()
 	uint j,pin_address;
 	j=0;
 	pin_address=0;//扫描结果初始化
-	//P2=0Xff;//端口初始化
 	KEY_OK=1;
 	KEY_UP=1;
 	KEY_DOWN=1;
 
 scan_start://端口扫描，在任意按键被按下前重复检测，直到延时结束
 	n_ms(10);
-	//P1=0x0c;//尝试用P1控制LED
-
-	//i=P2;
-	//i=i&0x01;
 	i=KEY_OK;
 	if (i<1) 
 		{
 			pin_address=1;
 			goto scan_check;
 		}
-	//i=P2;
-	//i=i&0x02;	
 	i=KEY_DOWN;
 	if (i<1) 
 		{
 			pin_address=2;
 			goto scan_check;
 		}
-	//i=P2;
-	//i=i&0x04;	
 	i=KEY_UP;
 	if (i<1) 
 		{
@@ -249,8 +210,6 @@ scan_check://检测到按键按下后确认按键松开，直到延时结束
 	{
 		case 1:
 			n_ms(10);
-  			//i=P2;
-			//i=i&0x01;
 			i=KEY_OK;
 			if(i<1)
 			{
@@ -261,8 +220,6 @@ scan_check://检测到按键按下后确认按键松开，直到延时结束
 			break;
 		case 2:
 			n_ms(10);
-  			//i=P2;
-			//i=i&0x02;	
 			i=KEY_DOWN;
 			if(i<1)
 			{
@@ -273,8 +230,6 @@ scan_check://检测到按键按下后确认按键松开，直到延时结束
 			break;
 		case 3:
 			n_ms(10);
-  			//i=P2;
-			//i=i&0x04;	
 			i=KEY_UP;
 			if(i<1)
 			{
@@ -287,7 +242,6 @@ scan_check://检测到按键按下后确认按键松开，直到延时结束
 			goto scan_start;//检测确认完成，再次进入检测按键按下
 	}
 scan_finish://结束检测，返回检测结果
-	//P1=0x00;
 	return pin_address;//无操作时为0，第0脚时为1，第1脚时为2，第2脚时为3
 }
 

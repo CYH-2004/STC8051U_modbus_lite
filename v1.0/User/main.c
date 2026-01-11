@@ -64,7 +64,6 @@ void main()
     uint8_t light_status;
     uint8_t light_status_temp;
     uint16_t counter;
-    // uint16_t counter_temp;
 
     uint16_t slave_address;
     uint16_t slave_light_coil_addr;
@@ -74,14 +73,12 @@ void main()
 
     MCU_Init();
 
-
     OLED_Init();
     OLED_GRAM_Clear(0);
     OLED_Refresh_Gram();
     counter = 0;
     light_status = 0;
     
-
     //设置从站地址
     slave_address = 0x10;
 
@@ -154,16 +151,12 @@ void main()
             }
             modbus_get_reg_value(slave_counter_reg_addr, &counter);
             OLED_ShowStringG(0, 6, "Cnt:", 16, 0);
-            OLED_ShowNumG(45, 6, counter, 1, 16, 0);
+            OLED_ShowNumG(45, 6, counter, 3, 16, 0);
 
             OLED_ShowStringG(0, 0, "Slave", 16, 1);
             OLED_ShowStringG(0, 2, "Addr:", 16, 0);
             OLED_ShowNumG(45, 2, slave_address, 3, 16, 0);
             OLED_Refresh_Gram();
-            // if(key_scan2(10))
-            // {
-            //     counter = 0;
-            // }
         }
     }
     else    //主机模式
@@ -178,8 +171,6 @@ void main()
         OLED_Refresh_Gram();
 
         //熄灯并清除从机计数器
-        // while(modbus_RTU_write_single_coil(slave_address, slave_light_coil_addr, 0, 300)) n_ms(10);
-        // while(modbus_RTU_write_single_reg(slave_address, slave_counter_reg_addr, 0, 300)) n_ms(10);
         slave_status = 1;
         while(slave_status) slave_status = modbus_RTU_write_single_coil(slave_address, slave_light_coil_addr, 0, 300);
         slave_status = 1;

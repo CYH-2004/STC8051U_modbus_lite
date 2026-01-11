@@ -9,6 +9,7 @@
 uint8_t node_address;
 uint8_t node_mode;
 
+//modbus_RTU 本地存储器
 volatile uint8_t xdata discrete_input_register[(DISCRETES_INPUT_MAX + 7) / 8];
 volatile uint8_t xdata coil_register[(COILS_MAX + 7) / 8];
 volatile uint16_t xdata input_register[INPUT_REG_MAX];
@@ -32,32 +33,39 @@ uint8_t modbus_write_bit_status(uint16_t reg_addr, uint8_t *bit_buf);
 uint16_t modbus_get_reg_value(uint16_t reg_addr, uint8_t *bit_buf);
 uint16_t modbus_write_reg_value(uint16_t reg_addr, uint16_t *reg_buf);
 
-
 //modbus_RTU 主机程序
-uint8_t modbus_RTU_read_coils(uint8_t slave_addr, uint16_t reg_addr, uint16_t quantity, uint8_t *value, uint32_t timeout);
-uint8_t modbus_RTU_read_discrete_input(uint8_t slave_addr, uint16_t reg_addr, uint16_t quantity, uint8_t *value, uint32_t timeout);
-uint8_t modbus_RTU_read_holding_regs(uint8_t slave_addr, uint16_t reg_addr, uint16_t quantity, uint16_t *RX_value_p, uint32_t timeout);
-uint8_t modbus_RTU_write_single_coil(uint8_t slave_addr, uint16_t reg_addr, uint16_t value, uint32_t timeout);
-uint8_t modbus_RTU_write_single_reg(uint8_t slave_addr, uint16_t reg_addr, uint16_t value, uint32_t timeout);
-uint8_t modbus_RTU_write_multi_coils(uint8_t slave_addr, uint16_t reg_addr, uint16_t quantity, uint8_t *Value_p, uint32_t timeout);
-uint8_t modbus_RTU_write_multi_regs(uint8_t slave_addr, uint16_t reg_addr, uint16_t quantity, uint16_t *Value_p, uint32_t timeout);
+uint8_t modbus_RTU_read_coils(uint8_t slave_addr, uint16_t reg_addr, uint16_t quantity, uint8_t *value, uint32_t timeout);              //(0x01) Read Coils
+uint8_t modbus_RTU_read_discrete_input(uint8_t slave_addr, uint16_t reg_addr, uint16_t quantity, uint8_t *value, uint32_t timeout);     //(0x02) Read Discrete Inputs
+uint8_t modbus_RTU_read_holding_regs(uint8_t slave_addr, uint16_t reg_addr, uint16_t quantity, uint16_t *RX_value_p, uint32_t timeout); //(0x03) Read Holding Registers
+uint8_t modbus_RTU_write_single_coil(uint8_t slave_addr, uint16_t reg_addr, uint16_t value, uint32_t timeout);                          //(0x05) Write Single Coil
+uint8_t modbus_RTU_write_single_reg(uint8_t slave_addr, uint16_t reg_addr, uint16_t value, uint32_t timeout);                           //(0x06) Write Single Register
+uint8_t modbus_RTU_write_multi_coils(uint8_t slave_addr, uint16_t reg_addr, uint16_t quantity, uint8_t *Value_p, uint32_t timeout);     //(0x0F) Write Multiple Coils
+uint8_t modbus_RTU_write_multi_regs(uint8_t slave_addr, uint16_t reg_addr, uint16_t quantity, uint16_t *Value_p, uint32_t timeout);     //(0x10) Write Multiple Registers
 
 //modbus_RTU 从机程序
-uint8_t modbus_RTU_slave_r1(uint8_t xdata *buffer_p, uint8_t data_len);
-uint8_t modbus_RTU_slave_r2(uint8_t xdata *buffer_p, uint8_t data_len);
-uint8_t modbus_RTU_slave_r3(uint8_t xdata *buffer_p, uint8_t data_len);
-uint8_t modbus_RTU_slave_r4(uint8_t xdata *buffer_p, uint8_t data_len);
-uint8_t modbus_RTU_slave_r5(uint8_t xdata *buffer_p, uint8_t data_len);
-uint8_t modbus_RTU_slave_r6(uint8_t xdata *buffer_p, uint8_t data_len);
-uint8_t modbus_RTU_slave_r15(uint8_t xdata *buffer_p, uint8_t data_len);
-uint8_t modbus_RTU_slave_r16(uint8_t xdata *buffer_p, uint8_t data_len);
+uint8_t modbus_RTU_slave_r1(uint8_t xdata *buffer_p, uint8_t data_len);     //(0x01) Read Coils
+uint8_t modbus_RTU_slave_r2(uint8_t xdata *buffer_p, uint8_t data_len);     //(0x02) Read Discrete Inputs
+uint8_t modbus_RTU_slave_r3(uint8_t xdata *buffer_p, uint8_t data_len);     //(0x03) Read Holding Registers
+uint8_t modbus_RTU_slave_r4(uint8_t xdata *buffer_p, uint8_t data_len);     //(0x04) Read Input Registers
+uint8_t modbus_RTU_slave_r5(uint8_t xdata *buffer_p, uint8_t data_len);     //(0x05) Write Single Coil
+uint8_t modbus_RTU_slave_r6(uint8_t xdata *buffer_p, uint8_t data_len);     //(0x06) Write Single Register
+uint8_t modbus_RTU_slave_r15(uint8_t xdata *buffer_p, uint8_t data_len);    //(0x0F) Write Multiple Coils
+uint8_t modbus_RTU_slave_r16(uint8_t xdata *buffer_p, uint8_t data_len);    //(0x10) Write Multiple Registers
 
-uint8_t modbus_RTU_slave_process(uint8_t xdata *buffer_p, uint8_t data_len);
-void modbus_RTU_slave(void);
+uint8_t modbus_RTU_slave_process(uint8_t xdata *buffer_p, uint8_t data_len);    //modbus_RTU 从机数据与应答处理
+void modbus_RTU_slave(void);    //modbus_RTU 从机处理程序
 
 
 
-// modbus_RTU初始化
+//========================================================================
+// 函数: uint8_t modbus_RTU_init(uint16_t brt, uint8_t mode, uint8_t addr)
+// 描述: modbus_RTU 初始化函数
+// 参数: brt: 串口波特率，该参数暂不使用.
+//       mode: 模式: 0: 从机模式, 1: 主机模式.
+//       addr: 节点地址.
+
+// 返回: 1
+//========================================================================
 uint8_t modbus_RTU_init(uint16_t brt, uint8_t mode, uint8_t addr)
 {
     uint16_t i;
@@ -712,7 +720,7 @@ uint8_t modbus_RTU_write_multi_regs(uint8_t slave_addr, uint16_t reg_addr, uint1
 字节:   1 byte   1 byte    1byte    2 byte
 
 
-
+......(懒得写了)
 
 */
 
@@ -1073,46 +1081,30 @@ void modbus_RTU_slave(void)
     uint8_t xdata *buffer_p;
 
     error_code = 0xff;
-    // Uart2_PrintRaw_8(error_code);
     if(B_RX4_OK == 1)
     {
-        // PrintString2("Receive data! \r\n");
+        // PrintString1("Receive data! \r\n");
         data_len = get_RX4_buffer_length();
         buffer_p = get_RX4_buffer_address();
         if(MODBUS_CRC16(buffer_p, data_len) == 0)	//CRC16校验，错误帧丢弃
         {
-            // PrintString2("CRC correct! \r\n");
-
+            // PrintString1("CRC correct! \r\n");
             if(data_len > 2) data_len -= 2;	//减去CRC16校验字节
             if((buffer_p[0] == 0x00) || (buffer_p[0] == node_address))	//站号比对（地址相符或为广播地址）
             {
                 error_code = modbus_RTU_slave_process(buffer_p, data_len);	//MODBUS-RTU协议解析
                 if(error_code != 0)	//数据错误处理
                 {
-                    // PrintString2("Error_code: \r\n");
-                    // Uart2_PrintRaw_8(error_code);
-                    // PrintString2("\r\n");
+
                 }
             }
         }
         else 
         {
-            // PrintString2("CRC error! \r\n");
+            // PrintString1("CRC error! \r\n");
         }
         UART4_RX_buffer_reset();//清接收标志
 
-        //test
-        // for(i = 0; i < HOLDING_REG_MAX; i++)
-        // {
-        //     PrintRaw_8((uint8_t)(holding_register[i] >> 8));
-        //     PrintRaw_8((uint8_t)(holding_register[i]));
-        // }
-        // PrintString2("\r\n");
-        // for(i = 0; i < 10; i++)
-        // {
-        //     Uart2_PrintRaw_8(RTU_TX_buffer[i]);
-        // }
-        // PrintString2("\r\n");
     }
 }
 

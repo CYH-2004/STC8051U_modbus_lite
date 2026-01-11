@@ -7,13 +7,8 @@ extern u8  TX3_number;
 uint32_t systick_count;
 
 void Delay1000ms(void);
-
 void n_ms(uint16_t x);
-// void delay_n_s(uint16_t x);//延时N-S子程序
-// void delay_n_100ms(uint16_t x);
-
 void n_ms_timer_0(void);
-
 void timer4_init(void);
 uint32_t get_systick(void);
 
@@ -47,33 +42,6 @@ void n_ms(uint16_t x)
 		n_ms_timer_0();
     }
 }
-
-
-//延时N-S子程序********************************************************************
-// void delay_n_s(uint16_t x)
-// {
-//     uint16_t i;
-//     uint16_t y;
-//     for(y=0;y<x;y++)
-//     {
-//         for(i=0;i<1000;i++);
-// 		n_ms_timer_0();
-//     }
-// }
-
-//延时N-100ms子程序********************************************************************
-// void delay_n_100ms(uint16_t x)
-// {
-//     uint16_t i;
-//     uint16_t y;
-//     for(y=0;y<x;y++)
-//     {
-//         for(i=0;i<100;i++)
-// 		{
-// 			n_ms_timer_0();
-// 		}
-//     }
-// }
 
 //定时器0的阻塞式1ms延时***********************************************************
 void n_ms_timer_0(void)
@@ -148,6 +116,5 @@ void TM4_Isr() interrupt 20
 //获取systick值
 uint32_t get_systick(void) 
 {
-    // return T11CR;
     return systick_count;
 }
