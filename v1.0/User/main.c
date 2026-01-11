@@ -22,7 +22,7 @@ void MCU_Init(void)
 
 	//IO¿Ú³õÊ¼ÉèÖÃ
     P0M0 = 0x00;    P0M1 = 0x00;
-    P1M0 = 0x00;    P1M1 = 0x00;
+    P1M0 = 0x30;    P1M1 = 0x30; 
     P2M0 = 0xff;    P2M1 = 0x00; 
     P3M0 = 0x00;    P3M1 = 0x00;
     P4M0 = 0x00;    P4M1 = 0x00;
@@ -65,7 +65,7 @@ void main()
     uint8_t light_status_temp;
     uint16_t counter;
 
-    uint16_t slave_address;
+    uint8_t slave_address;
     uint16_t slave_light_coil_addr;
     uint16_t slave_counter_reg_addr;
 

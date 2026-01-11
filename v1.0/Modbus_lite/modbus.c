@@ -30,7 +30,7 @@ uint8_t modbus_response_WR_check(uint8_t xdata *RX_mesg, uint8_t xdata *TX_mesg)
 uint8_t xdata *modbus_get_reg_addr(uint16_t reg_addr);
 uint8_t modbus_get_bit_status(uint16_t reg_addr, uint8_t *bit_buf);
 uint8_t modbus_write_bit_status(uint16_t reg_addr, uint8_t *bit_buf);
-uint16_t modbus_get_reg_value(uint16_t reg_addr, uint8_t *bit_buf);
+uint16_t modbus_get_reg_value(uint16_t reg_addr, uint16_t *reg_buf);
 uint16_t modbus_write_reg_value(uint16_t reg_addr, uint16_t *reg_buf);
 
 //modbus_RTU 主机程序
@@ -209,7 +209,7 @@ uint8_t modbus_write_bit_status(uint16_t reg_addr, uint8_t *bit_buf)
     if((reg_addr >= COILS_START_ADDRESS) && (reg_addr < COILS_START_ADDRESS + COILS_MAX))
     {
         //写入指定位
-        set_bit(coil_register[(reg_addr - COILS_START_ADDRESS) / 8], ((reg_addr - COILS_START_ADDRESS) % 8), *bit_buf, 0);
+        set_bit(&coil_register[(reg_addr - COILS_START_ADDRESS) / 8], (uint8_t)((reg_addr - COILS_START_ADDRESS) % 8), bit_buf, 0);
         return 1;
     }
     return 0;
@@ -928,8 +928,7 @@ uint8_t modbus_RTU_slave_r5(uint8_t xdata *buffer_p, uint8_t data_len)
 //modbus_RTU 从机写单寄存器指令处理(0x06)
 uint8_t modbus_RTU_slave_r6(uint8_t xdata *buffer_p, uint8_t data_len)
 {
-    uint8_t i,j;
-    uint8_t reg_num;	//写入寄存器个数
+    uint8_t i;
 	uint16_t reg_addr;	//寄存器地址
     uint16_t reg_addr_temp;
     uint16_t crc;
@@ -1075,7 +1074,6 @@ uint8_t modbus_RTU_slave_process(uint8_t xdata *buffer_p, uint8_t data_len)
 //modbus从机处理程序
 void modbus_RTU_slave(void)
 {
-    uint16_t i;
     uint8_t error_code;
     uint8_t data_len;
     uint8_t xdata *buffer_p;

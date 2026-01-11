@@ -239,7 +239,7 @@ void IIC_Init(void)            //硬件IIC初始化
 {
     I2C_S1 = 0;                 //设置IIC的引脚,00:P15,P14; 01:P25,P24; 11:P32,P33
     I2C_S0 = 1;                 //SCL=P25 SDA=P24
-    I2CCFG = 0XE0;              //设置速度和使能IIC
+    I2CCFG = 0XE5;              //设置速度和使能IIC
     I2CMSST = 0;                //清空主机状态
 }
 

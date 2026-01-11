@@ -31,7 +31,7 @@ extern uint8_t modbus_mode(void);  //获取当前模式
 extern uint8_t xdata *modbus_get_reg_addr(uint16_t reg_addr);  //获取指定本地寄存器地址
 extern uint8_t modbus_get_bit_status(uint16_t reg_addr, uint8_t *bit_buf);     //获取指定本地寄存器位
 extern uint8_t modbus_write_bit_status(uint16_t reg_addr, uint8_t *bit_buf);   //设置指定本地寄存器位
-extern uint16_t modbus_get_reg_value(uint16_t reg_addr, uint8_t *bit_buf);     //获取指定本地寄存器值
+extern uint16_t modbus_get_reg_value(uint16_t reg_addr, uint16_t *reg_buf);     //获取指定本地寄存器值
 extern uint16_t modbus_write_reg_value(uint16_t reg_addr, uint16_t *reg_buf);  //设置指定本地寄存器值
 
 //modbus_RTU 主机程序
